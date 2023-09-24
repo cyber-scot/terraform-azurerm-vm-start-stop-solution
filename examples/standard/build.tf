@@ -1,5 +1,5 @@
 module "start_stop" {
-  source = "../../"
+  source = "cyber-scot/vm-start-stop-solution/azurerm"
 
 
   name     = "vmstartstop"
