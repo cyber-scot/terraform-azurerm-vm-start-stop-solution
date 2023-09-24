@@ -1,7 +1,7 @@
 
 ```hcl
 module "start_stop" {
-  source = "cyber-scot/vm-start-stop-solution/azurerm"
+  source = "../../"
 
 
   name     = "vmstartstop"
@@ -138,7 +138,7 @@ No requirements.
 | <a name="module_network"></a> [network](#module\_network) | cyber-scot/network/azurerm | n/a |
 | <a name="module_nsg"></a> [nsg](#module\_nsg) | cyber-scot/nsg/azurerm | n/a |
 | <a name="module_rg"></a> [rg](#module\_rg) | cyber-scot/rg/azurerm | n/a |
-| <a name="module_start_stop"></a> [start\_stop](#module\_start\_stop) | cyber-scot/vm-start-stop-solution/azurerm | n/a |
+| <a name="module_start_stop"></a> [start\_stop](#module\_start\_stop) | ../../ | n/a |
 | <a name="module_windows_11_vms"></a> [windows\_11\_vms](#module\_windows\_11\_vms) | cyber-scot/windows-virtual-machine/azurerm | n/a |
 
 ## Resources

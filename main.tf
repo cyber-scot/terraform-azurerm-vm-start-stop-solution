@@ -968,694 +968,811 @@ locals {
   }
 
   merged_dashboard_tags = merge(local.dashboard_tag, local.solution_merged_tags)
+
+  dashboard = {
+
+  }
 }
 
 resource "azurerm_portal_dashboard" "dashboard" {
   dashboard_properties = <<DASHBOARD_PROPERTIES
 {
-  "lenses": {
-    "0": {
-      "order": 0,
-      "parts": {
-        "0": {
-          "metadata": {
-            "inputs": [],
-            "settings": {
-              "content": {
-                "settings": {
-                  "content": "This is your StartStop VMs dashboard.\\n\\nFor more information view [doc](https://github.com/microsoft/startstopv2-deployments/blob/main/README.md)\\n\\n**Deployment information**\\n\\u003e **Subscription :** CyberScot-Prd  \\n\\u003e **Resource Group :** ${azurerm_application_insights.app_insights.name}  \\n\\u003e **Application Insights :** ${azurerm_application_insights.app_insights.name}",
-                  "markdownSource": 1,
-                  "subtitle": "",
-                  "title": "Welcome!"
-                }
-              },
-              "type": "Extension/HubsExtension/PartType/MarkdownPart"
-            },
+"lenses": {
+      "0": {
+        "order": 0,
+        "parts": {
+          "0": {
             "position": {
-              "colSpan": 3,
-              "rowSpan": 4,
               "x": 0,
-              "y": 0
+              "y": 0,
+              "colSpan": 3,
+              "rowSpan": 4
+            },
+            "metadata": {
+              "inputs": [],
+              "type": "Extension/HubsExtension/PartType/MarkdownPart",
+              "settings": {
+                "content": {
+                  "settings": {
+                    "content": "This is your StartStop VMs dashboard.\n\nFor more information view [doc](https://github.com/microsoft/startstopv2-deployments/blob/main/README.md)\n\n**Deployment information**\n> **Subscription :** CyberScot-Prd  \n> **Resource Group :** ${azurerm_application_insights.app_insights.resource_group_name}  \n> **Application Insights :** ${azurerm_application_insights.app_insights.name}",
+                    "title": "Welcome!",
+                    "subtitle": "",
+                    "markdownSource": 1
+                  }
+                }
+              }
             }
-          }
-        },
-        "1": {
-          "metadata": {
-            "inputs": [
-              {
-                "name": "ComponentId",
-                "value": {
-                  "Name": "${azurerm_application_insights.app_insights.name}",
-                  "ResourceGroup": "${azurerm_application_insights.app_insights.name}",
-                  "ResourceId": "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${azurerm_application_insights.app_insights.name}/providers/Microsoft.Insights/components/${azurerm_application_insights.app_insights.name}",
-                  "SubscriptionId": "${azurerm_application_insights.app_insights.name}"
+          },
+          "1": {
+            "position": {
+              "x": 3,
+              "y": 0,
+              "colSpan": 5,
+              "rowSpan": 4
+            },
+            "metadata": {
+              "inputs": [
+                {
+                  "name": "ComponentId",
+                  "value": {
+                    "SubscriptionId": "${data.azurerm_client_config.current.subscription_id}",
+                    "ResourceGroup": "${azurerm_application_insights.app_insights.resource_group_name}",
+                    "Name": "${azurerm_application_insights.app_insights.name}",
+                    "ResourceId": "${azurerm_application_insights.app_insights.id}"
+                  }
+                },
+                {
+                  "name": "Query",
+                  "value": "traces \n| where customDimensions.prop__Name == \"VmExecutionsAttempted\" and customDimensions.prop__Successful == true\n| project      \n    action = tostring(customDimensions.prop__ActionType),\n    value = customDimensions.prop__value,\n    timestamp\n| summarize request_count=sum(toreal(value)) by action,bin(timestamp, 1h)\n"
+                },
+                {
+                  "name": "TimeRange",
+                  "value": "PT30M"
+                },
+                {
+                  "name": "Dimensions",
+                  "value": {
+                    "xAxis": {
+                      "name": "timestamp",
+                      "type": "datetime"
+                    },
+                    "yAxis": [
+                      {
+                        "name": "request_count",
+                        "type": "real"
+                      }
+                    ],
+                    "splitBy": [
+                      {
+                        "name": "action",
+                        "type": "string"
+                      }
+                    ],
+                    "aggregation": "Sum"
+                  }
+                },
+                {
+                  "name": "Version",
+                  "value": "1.0"
+                },
+                {
+                  "name": "PartId",
+                  "value": "1873282b-e618-432b-8147-bd0cfb34cf73"
+                },
+                {
+                  "name": "PartTitle",
+                  "value": "Successful Start and Stop Actions Taken"
+                },
+                {
+                  "name": "PartSubTitle",
+                  "value": "Total count of successful start and stop actions taken against your virtual machines by the StartStop service."
+                },
+                {
+                  "name": "resourceTypeMode",
+                  "value": "components"
+                },
+                {
+                  "name": "ControlType",
+                  "value": "FrameControlChart"
+                },
+                {
+                  "name": "SpecificChart",
+                  "value": "UnstackedColumn"
+                },
+                {
+                  "name": "DashboardId",
+                  "isOptional": true
+                },
+                {
+                  "name": "Scope",
+                  "isOptional": true
+                },
+                {
+                  "name": "DraftRequestParameters",
+                  "isOptional": true
+                },
+                {
+                  "name": "LegendOptions",
+                  "isOptional": true
+                },
+                {
+                  "name": "IsQueryContainTimeRange",
+                  "isOptional": true
+                }
+              ],
+              "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+              "settings": {
+                "content": {
+                  "Query": "traces \n| where customDimensions.prop__Name == \"VmExecutionsAttempted\" and customDimensions.prop__Successful == true\n| project      \n    action = tostring(customDimensions.prop__ActionType),\n    value = customDimensions.prop__Value,\n    timestamp\n| summarize request_count=sum(toreal(value)) by action,bin(timestamp, 1h)\n\n",
+                  "LegendOptions": {
+                    "isEnabled": true,
+                    "position": "Bottom"
+                  }
+                }
+              }
+            }
+          },
+          "2": {
+            "position": {
+              "x": 8,
+              "y": 0,
+              "colSpan": 5,
+              "rowSpan": 4
+            },
+            "metadata": {
+              "inputs": [
+                {
+                  "name": "resourceTypeMode",
+                  "value": "components",
+                  "isOptional": true
+                },
+                {
+                  "name": "ComponentId",
+                  "value": {
+                    "SubscriptionId": "${data.azurerm_client_config.current.subscription_id}",
+                    "ResourceGroup": "${azurerm_application_insights.app_insights.resource_group_name}",
+                    "Name": "${azurerm_application_insights.app_insights.name}",
+                    "ResourceId": "${azurerm_application_insights.app_insights.id}"
+                  },
+                  "isOptional": true
+                },
+                {
+                  "name": "Scope",
+                  "isOptional": true
+                },
+                {
+                  "name": "PartId",
+                  "value": "1873282b-e618-432b-8147-bd0cfb34cf73",
+                  "isOptional": true
+                },
+                {
+                  "name": "Version",
+                  "value": "1.0",
+                  "isOptional": true
+                },
+                {
+                  "name": "TimeRange",
+                  "value": "PT30M",
+                  "isOptional": true
+                },
+                {
+                  "name": "DashboardId",
+                  "isOptional": true
+                },
+                {
+                  "name": "DraftRequestParameters",
+                  "isOptional": true
+                },
+                {
+                  "name": "Query",
+                  "value": "traces \n| where customDimensions.prop__Name == \"VmExecutionsAttempted\" and customDimensions.prop__Successful == true\n| project      \n    action = tostring(customDimensions.prop__ActionType),\n    value = customDimensions.prop__value,\n    timestamp\n| summarize request_count=sum(toreal(value)) by action,bin(timestamp, 1h)\n",
+                  "isOptional": true
+                },
+                {
+                  "name": "ControlType",
+                  "value": "FrameControlChart",
+                  "isOptional": true
+                },
+                {
+                  "name": "SpecificChart",
+                  "value": "UnstackedColumn",
+                  "isOptional": true
+                },
+                {
+                  "name": "PartTitle",
+                  "value": "Successful Start and Stop Actions Taken",
+                  "isOptional": true
+                },
+                {
+                  "name": "PartSubTitle",
+                  "value": "Total count of successful start and stop actions taken against your virtual machines by the StartStop service.",
+                  "isOptional": true
+                },
+                {
+                  "name": "Dimensions",
+                  "value": {
+                    "xAxis": {
+                      "name": "timestamp",
+                      "type": "datetime"
+                    },
+                    "yAxis": [
+                      {
+                        "name": "request_count",
+                        "type": "real"
+                      }
+                    ],
+                    "splitBy": [
+                      {
+                        "name": "action",
+                        "type": "string"
+                      }
+                    ],
+                    "aggregation": "Sum"
+                  },
+                  "isOptional": true
+                },
+                {
+                  "name": "LegendOptions",
+                  "isOptional": true
+                },
+                {
+                  "name": "IsQueryContainTimeRange",
+                  "isOptional": true
+                }
+              ],
+              "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+              "settings": {
+                "content": {
+                  "Query": "traces \n| where customDimensions.prop__Name == \"VmExecutionsAttempted\" and customDimensions.prop__Successful == false\n| project      \n    action = tostring(customDimensions.prop__ActionType),\n    value = customDimensions.prop__Value,\n    timestamp\n| summarize request_count=sum(toreal(value)) by action,bin(timestamp, 1h)\n\n",
+                  "ControlType": "AnalyticsGrid",
+                  "LegendOptions": {
+                    "isEnabled": true,
+                    "position": "Bottom"
+                  }
                 }
               },
-              {
-                "name": "Query",
-                "value": "traces \\n| where customDimensions.prop__Name == \\\"VmExecutionsAttempted\\\" and customDimensions.prop__Successful == true\\n| project      \\n    action = tostring(customDimensions.prop__ActionType),\\n    value = customDimensions.prop__value,\\n    timestamp\\n| summarize request_count=sum(toreal(value)) by action,bin(timestamp, 1h)\\n"
-              },
-              {
-                "name": "TimeRange",
-                "value": "PT30M"
-              },
-              {
-                "name": "Dimensions",
-                "value": {
-                  "aggregation": "Sum",
-                  "splitBy": [
-                    {
+              "partHeader": {
+                "title": "Failed Start and Stop Actions Taken",
+                "subtitle": ""
+              }
+            }
+          },
+          "3": {
+            "position": {
+              "x": 0,
+              "y": 4,
+              "colSpan": 9,
+              "rowSpan": 4
+            },
+            "metadata": {
+              "inputs": [
+                {
+                  "name": "Version",
+                  "value": "1.0"
+                },
+                {
+                  "name": "PartId",
+                  "value": "15b42e68-24a8-4715-ae79-067f634ce119"
+                },
+                {
+                  "name": "PartTitle",
+                  "value": "Recently attempted actions on VMs"
+                },
+                {
+                  "name": "PartSubTitle",
+                  "value": "Virtual machines which recently had a start or stop action attempted."
+                },
+                {
+                  "name": "ComponentId",
+                  "value": {
+                    "SubscriptionId": "${data.azurerm_client_config.current.subscription_id}",
+                    "ResourceGroup": "${azurerm_application_insights.app_insights.resource_group_name}",
+                    "Name": "${azurerm_application_insights.app_insights.name}",
+                    "ResourceId": "${azurerm_application_insights.app_insights.id}"
+                  }
+                },
+                {
+                  "name": "Query",
+                  "value": "traces\n| where customDimensions.prop__Name == \"VmExecutionsAttempted\"\n| project      \n  action = customDimensions.prop__ActionType,\n  virtual_machine = customDimensions.prop__ResourceName,\n  resource_group = customDimensions.prop__ResourceGroup,\n  subscription_ID = customDimensions.prop__SubscriptionId,\n  timestamp\n| order by timestamp desc\n"
+                },
+                {
+                  "name": "TimeRange",
+                  "value": "P1D"
+                },
+                {
+                  "name": "resourceTypeMode",
+                  "value": "components"
+                },
+                {
+                  "name": "ControlType",
+                  "value": "AnalyticsGrid"
+                },
+                {
+                  "name": "Dimensions",
+                  "isOptional": true
+                },
+                {
+                  "name": "DashboardId",
+                  "isOptional": true
+                },
+                {
+                  "name": "SpecificChart",
+                  "isOptional": true
+                },
+                {
+                  "name": "Scope",
+                  "isOptional": true
+                },
+                {
+                  "name": "DraftRequestParameters",
+                  "isOptional": true
+                },
+                {
+                  "name": "LegendOptions",
+                  "isOptional": true
+                },
+                {
+                  "name": "IsQueryContainTimeRange",
+                  "isOptional": true
+                }
+              ],
+              "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+              "settings": {},
+              "asset": {
+                "idInputName": "ComponentId",
+                "type": "ApplicationInsights"
+              }
+            }
+          },
+          "4": {
+            "position": {
+              "x": 9,
+              "y": 4,
+              "colSpan": 4,
+              "rowSpan": 4
+            },
+            "metadata": {
+              "inputs": [
+                {
+                  "name": "ComponentId",
+                  "value": {
+                    "SubscriptionId": "${data.azurerm_client_config.current.subscription_id}",
+                    "ResourceGroup": "${azurerm_application_insights.app_insights.resource_group_name}",
+                    "Name": "${azurerm_application_insights.app_insights.name}",
+                    "ResourceId": "${azurerm_application_insights.app_insights.id}"
+                  },
+                  "isOptional": true
+                },
+                {
+                  "name": "Dimensions",
+                  "value": {
+                    "xAxis": {
                       "name": "action",
                       "type": "string"
-                    }
-                  ],
-                  "xAxis": {
-                    "name": "timestamp",
-                    "type": "datetime"
+                    },
+                    "yAxis": [
+                      {
+                        "name": "request_count",
+                        "type": "real"
+                      }
+                    ],
+                    "splitBy": [],
+                    "aggregation": "Sum"
                   },
-                  "yAxis": [
-                    {
-                      "name": "request_count",
-                      "type": "real"
-                    }
-                  ]
-                }
-              },
-              {
-                "name": "Version",
-                "value": "1.0"
-              },
-              {
-                "name": "PartId",
-                "value": "1873282b-e618-432b-8147-bd0cfb34cf73"
-              },
-              {
-                "name": "PartTitle",
-                "value": "Successful Start and Stop Actions Taken"
-              },
-              {
-                "name": "PartSubTitle",
-                "value": "Total count of successful start and stop actions taken against your virtual machines by the StartStop service."
-              },
-              {
-                "name": "resourceTypeMode",
-                "value": "components"
-              },
-              {
-                "name": "ControlType",
-                "value": "FrameControlChart"
-              },
-              {
-                "name": "SpecificChart",
-                "value": "UnstackedColumn"
-              },
-              {
-                "isOptional": true,
-                "name": "DashboardId"
-              },
-              {
-                "isOptional": true,
-                "name": "Scope"
-              },
-              {
-                "isOptional": true,
-                "name": "DraftRequestParameters"
-              },
-              {
-                "isOptional": true,
-                "name": "LegendOptions"
-              },
-              {
-                "isOptional": true,
-                "name": "IsQueryContainTimeRange"
-              }
-            ],
-            "settings": {
-              "content": {
-                "LegendOptions": {
-                  "isEnabled": true,
-                  "position": "Bottom"
+                  "isOptional": true
                 },
-                "Query": "traces \\n| where customDimensions.prop__Name == \\\"VmExecutionsAttempted\\\" and customDimensions.prop__Successful == true\\n| project      \\n    action = tostring(customDimensions.prop__ActionType),\\n    value = customDimensions.prop__Value,\\n    timestamp\\n| summarize request_count=sum(toreal(value)) by action,bin(timestamp, 1h)\\n\\n"
-              }
-            },
-            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart"
-          },
-          "position": {
-            "colSpan": 5,
-            "rowSpan": 4,
-            "x": 3,
-            "y": 0
-          }
-        },
-        "2": {
-          "metadata": {
-            "inputs": [
-              {
-                "isOptional": true,
-                "name": "resourceTypeMode",
-                "value": "components"
-              },
-              {
-                "isOptional": true,
-                "name": "ComponentId",
-                "value": {
-                  "Name": "${azurerm_application_insights.app_insights.name}",
-                  "ResourceGroup": "${azurerm_application_insights.app_insights.name}",
-                  "ResourceId": "/subscriptions/${azurerm_application_insights.app_insights.name}/resourceGroups/${azurerm_application_insights.app_insights.name}/providers/Microsoft.Insights/components/${azurerm_application_insights.app_insights.name}",
-                  "SubscriptionId": "${azurerm_application_insights.app_insights.name}"
+                {
+                  "name": "Query",
+                  "value": "traces\n| where customDimensions.prop__Name == \"VmExecutionsAttempted\" and customDimensions.prop__Successful == true\n| project      \n    action = tostring(customDimensions.prop__ActionType),\n    value = toreal(customDimensions.prop__value),\n    timestamp\n| summarize request_count=sum(value) by action,bin(timestamp, 1h)\n",
+                  "isOptional": true
+                },
+                {
+                  "name": "PartTitle",
+                  "value": "Start & Stop (%)",
+                  "isOptional": true
+                },
+                {
+                  "name": "PartSubTitle",
+                  "value": "Total % count of start and stop action",
+                  "isOptional": true
+                },
+                {
+                  "name": "PartId",
+                  "value": "08ad6984-455d-440c-9596-73760a4178c3",
+                  "isOptional": true
+                },
+                {
+                  "name": "Version",
+                  "value": "1.0",
+                  "isOptional": true
+                },
+                {
+                  "name": "resourceTypeMode",
+                  "value": "components",
+                  "isOptional": true
+                },
+                {
+                  "name": "TimeRange",
+                  "value": "P30D",
+                  "isOptional": true
+                },
+                {
+                  "name": "DashboardId",
+                  "isOptional": true
+                },
+                {
+                  "name": "ControlType",
+                  "value": "FrameControlChart",
+                  "isOptional": true
+                },
+                {
+                  "name": "SpecificChart",
+                  "value": "Donut",
+                  "isOptional": true
+                },
+                {
+                  "name": "Scope",
+                  "isOptional": true
+                },
+                {
+                  "name": "DraftRequestParameters",
+                  "isOptional": true
+                },
+                {
+                  "name": "LegendOptions",
+                  "isOptional": true
+                },
+                {
+                  "name": "IsQueryContainTimeRange",
+                  "isOptional": true
                 }
-              },
-              {
-                "isOptional": true,
-                "name": "Scope"
-              },
-              {
-                "isOptional": true,
-                "name": "PartId",
-                "value": "1873282b-e618-432b-8147-bd0cfb34cf73"
-              },
-              {
-                "isOptional": true,
-                "name": "Version",
-                "value": "1.0"
-              },
-              {
-                "isOptional": true,
-                "name": "TimeRange",
-                "value": "PT30M"
-              },
-              {
-                "isOptional": true,
-                "name": "DashboardId"
-              },
-              {
-                "isOptional": true,
-                "name": "DraftRequestParameters"
-              },
-              {
-                "isOptional": true,
-                "name": "Query",
-                "value": "traces \\n| where customDimensions.prop__Name == \\\"VmExecutionsAttempted\\\" and customDimensions.prop__Successful == true\\n| project      \\n    action = tostring(customDimensions.prop__ActionType),\\n    value = customDimensions.prop__value,\\n    timestamp\\n| summarize request_count=sum(toreal(value)) by action,bin(timestamp, 1h)\\n"
-              },
-              {
-                "isOptional": true,
-                "name": "ControlType",
-                "value": "FrameControlChart"
-              },
-              {
-                "isOptional": true,
-                "name": "SpecificChart",
-                "value": "UnstackedColumn"
-              },
-              {
-                "isOptional": true,
-                "name": "PartTitle",
-                "value": "Successful Start and Stop Actions Taken"
-              },
-              {
-                "isOptional": true,
-                "name": "PartSubTitle",
-                "value": "Total count of successful start and stop actions taken against your virtual machines by the StartStop service."
-              },
-              {
-                "isOptional": true,
-                "name": "Dimensions",
-                "value": {
-                  "aggregation": "Sum",
-                  "splitBy": [
-                    {
-                      "name": "action",
-                      "type": "string"
-                    }
-                  ],
-                  "xAxis": {
-                    "name": "timestamp",
-                    "type": "datetime"
+              ],
+              "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+              "settings": {
+                "content": {
+                  "Query": "traces\n| where customDimensions.prop__Name == \"VmExecutionsAttempted\" and customDimensions.prop__Successful == true\n| project      \n    action = tostring(customDimensions.prop__ActionType),\n    value = toreal(customDimensions.prop__Value),\n    timestamp\n| summarize request_count=sum(value) by action,bin(timestamp, 1h)\n\n",
+                  "LegendOptions": {
+                    "isEnabled": true,
+                    "position": "Bottom"
+                  }
+                }
+              }
+            }
+          },
+          "5": {
+            "position": {
+              "x": 0,
+              "y": 8,
+              "colSpan": 6,
+              "rowSpan": 4
+            },
+            "metadata": {
+              "inputs": [
+                {
+                  "name": "ComponentId",
+                  "value": {
+                    "SubscriptionId": "${data.azurerm_client_config.current.subscription_id}",
+                    "ResourceGroup": "${azurerm_application_insights.app_insights.resource_group_name}",
+                    "Name": "${azurerm_application_insights.app_insights.name}",
+                    "ResourceId": "${azurerm_application_insights.app_insights.id}"
+                  }
+                },
+                {
+                  "name": "Query",
+                  "value": "(traces\n| where customDimensions.prop__Name == \"NoPiiScheduleRequests\" and tobool(customDimensions.prop__Sequenced)\n| project scenario = \"Sequenced\",      value = toreal(customDimensions.prop__value),      timestamp)\n| union\n(traces\n| where customDimensions.prop__Name == \"NoPiiScheduleRequests\" and tobool(customDimensions.prop__Sequenced) == false\n| project scenario = \"Scheduled\",      value = toreal(customDimensions.prop__value),      timestamp)\n| union\n(traces\n| where customDimensions.prop__Name == \"NoPiiAutoStopRequests\"\n| project scenario = \"AutoStop\",      value = toreal(customDimensions.prop__value),      timestamp)\n| summarize request_count=sum(value) by scenario,bin(timestamp, 15m)\n"
+                },
+                {
+                  "name": "TimeRange",
+                  "value": "PT1H"
+                },
+                {
+                  "name": "Dimensions",
+                  "value": {
+                    "xAxis": {
+                      "name": "timestamp",
+                      "type": "datetime"
+                    },
+                    "yAxis": [
+                      {
+                        "name": "request_count",
+                        "type": "real"
+                      }
+                    ],
+                    "splitBy": [
+                      {
+                        "name": "scenario",
+                        "type": "string"
+                      }
+                    ],
+                    "aggregation": "Sum"
+                  }
+                },
+                {
+                  "name": "Version",
+                  "value": "1.0"
+                },
+                {
+                  "name": "PartId",
+                  "value": "1b21d06a-2b57-4d5a-b912-1fe272b12de9"
+                },
+                {
+                  "name": "PartTitle",
+                  "value": "StartStop Scenarios"
+                },
+                {
+                  "name": "PartSubTitle",
+                  "value": "Count of recently executed schedules, sequenced, and auto stop scenarios."
+                },
+                {
+                  "name": "resourceTypeMode",
+                  "value": "components"
+                },
+                {
+                  "name": "ControlType",
+                  "value": "FrameControlChart"
+                },
+                {
+                  "name": "SpecificChart",
+                  "value": "StackedColumn"
+                },
+                {
+                  "name": "DashboardId",
+                  "isOptional": true
+                },
+                {
+                  "name": "Scope",
+                  "isOptional": true
+                },
+                {
+                  "name": "DraftRequestParameters",
+                  "isOptional": true
+                },
+                {
+                  "name": "LegendOptions",
+                  "isOptional": true
+                },
+                {
+                  "name": "IsQueryContainTimeRange",
+                  "isOptional": true
+                }
+              ],
+              "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+              "settings": {
+                "content": {
+                  "Query": "(traces\n| where customDimensions.prop__Name == \"NoPiiScheduleRequests\" and tobool(customDimensions.prop__Sequenced)\n| project scenario = \"Sequenced\",      value = toreal(customDimensions.prop__Value),      timestamp)\n| union\n(traces\n| where customDimensions.prop__Name == \"NoPiiScheduleRequests\" and tobool(customDimensions.prop__Sequenced) == false\n| project scenario = \"Scheduled\",      value = toreal(customDimensions.prop__Value),      timestamp)\n| union\n(traces\n| where customDimensions.prop__Name == \"NoPiiAutoStopRequests\"\n| project scenario = \"AutoStop\",      value = toreal(customDimensions.prop__Value),      timestamp)\n| summarize request_count=sum(value) by scenario,bin(timestamp, 15m)\n\n",
+                  "LegendOptions": {
+                    "isEnabled": true,
+                    "position": "Bottom"
+                  }
+                }
+              }
+            }
+          },
+          "6": {
+            "position": {
+              "x": 6,
+              "y": 8,
+              "colSpan": 4,
+              "rowSpan": 4
+            },
+            "metadata": {
+              "inputs": [
+                {
+                  "name": "ComponentId",
+                  "value": {
+                    "SubscriptionId": "${data.azurerm_client_config.current.subscription_id}",
+                    "ResourceGroup": "${azurerm_application_insights.app_insights.resource_group_name}",
+                    "Name": "${azurerm_application_insights.app_insights.name}",
+                    "ResourceId": "${azurerm_application_insights.app_insights.id}"
                   },
-                  "yAxis": [
-                    {
-                      "name": "request_count",
-                      "type": "real"
-                    }
-                  ]
-                }
-              },
-              {
-                "isOptional": true,
-                "name": "LegendOptions"
-              },
-              {
-                "isOptional": true,
-                "name": "IsQueryContainTimeRange"
-              }
-            ],
-            "partHeader": {
-              "subtitle": "",
-              "title": "Failed Start and Stop Actions Taken"
-            },
-            "settings": {
-              "content": {
-                "ControlType": "AnalyticsGrid",
-                "LegendOptions": {
-                  "isEnabled": true,
-                  "position": "Bottom"
+                  "isOptional": true
                 },
-                "Query": "traces \\n| where customDimensions.prop__Name == \\\"VmExecutionsAttempted\\\" and customDimensions.prop__Successful == false\\n| project      \\n    action = tostring(customDimensions.prop__ActionType),\\n    value = customDimensions.prop__Value,\\n    timestamp\\n| summarize request_count=sum(toreal(value)) by action,bin(timestamp, 1h)\\n\\n"
-              }
-            },
-            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart"
-          },
-          "position": {
-            "colSpan": 5,
-            "rowSpan": 4,
-            "x": 8,
-            "y": 0
-          }
-        },
-        "3": {
-          "metadata": {
-            "asset": {
-              "idInputName": "ComponentId",
-              "type": "ApplicationInsights"
-            },
-            "inputs": [
-              {
-                "name": "Version",
-                "value": "1.0"
-              },
-              {
-                "name": "PartId",
-                "value": "15b42e68-24a8-4715-ae79-067f634ce119"
-              },
-              {
-                "name": "PartTitle",
-                "value": "Recently attempted actions on VMs"
-              },
-              {
-                "name": "PartSubTitle",
-                "value": "Virtual machines which recently had a start or stop action attempted."
-              },
-              {
-                "name": "ComponentId",
-                "value": {
-                  "Name": "${azurerm_application_insights.app_insights.name}",
-                  "ResourceGroup": "${azurerm_application_insights.app_insights.name}",
-                  "ResourceId": "/subscriptions/${azurerm_application_insights.app_insights.name}/resourceGroups/${azurerm_application_insights.app_insights.name}/providers/Microsoft.Insights/components/${azurerm_application_insights.app_insights.name}",
-                  "SubscriptionId": "${azurerm_application_insights.app_insights.name}"
-                }
-              },
-              {
-                "name": "Query",
-                "value": "traces\\n| where customDimensions.prop__Name == \\\"VmExecutionsAttempted\\\"\\n| project      \\n  action = customDimensions.prop__ActionType,\\n  virtual_machine = customDimensions.prop__ResourceName,\\n  resource_group = customDimensions.prop__ResourceGroup,\\n  subscription_ID = customDimensions.prop__SubscriptionId,\\n  timestamp\\n| order by timestamp desc\\n"
-              },
-              {
-                "name": "TimeRange",
-                "value": "P1D"
-              },
-              {
-                "name": "resourceTypeMode",
-                "value": "components"
-              },
-              {
-                "name": "ControlType",
-                "value": "AnalyticsGrid"
-              },
-              {
-                "isOptional": true,
-                "name": "Dimensions"
-              },
-              {
-                "isOptional": true,
-                "name": "DashboardId"
-              },
-              {
-                "isOptional": true,
-                "name": "SpecificChart"
-              },
-              {
-                "isOptional": true,
-                "name": "Scope"
-              },
-              {
-                "isOptional": true,
-                "name": "DraftRequestParameters"
-              },
-              {
-                "isOptional": true,
-                "name": "LegendOptions"
-              },
-              {
-                "isOptional": true,
-                "name": "IsQueryContainTimeRange"
-              }
-            ],
-            "settings": {},
-            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart"
-          },
-          "position": {
-            "colSpan": 9,
-            "rowSpan": 4,
-            "x": 0,
-            "y": 4
-          }
-        },
-        "4": {
-          "metadata": {
-            "inputs": [
-              {
-                "isOptional": true,
-                "name": "ComponentId",
-                "value": {
-                  "Name": "${azurerm_application_insights.app_insights.name}",
-                  "ResourceGroup": "${azurerm_application_insights.app_insights.name}",
-                  "ResourceId": "/subscriptions/${azurerm_application_insights.app_insights.name}/resourceGroups/${azurerm_application_insights.app_insights.name}/providers/Microsoft.Insights/components/${azurerm_application_insights.app_insights.name}",
-                  "SubscriptionId": "${azurerm_application_insights.app_insights.name}"
-                }
-              },
-              {
-                "isOptional": true,
-                "name": "Dimensions",
-                "value": {
-                  "aggregation": "Sum",
-                  "splitBy": [],
-                  "xAxis": {
-                    "name": "action",
-                    "type": "string"
-                  },
-                  "yAxis": [
-                    {
-                      "name": "request_count",
-                      "type": "real"
-                    }
-                  ]
-                }
-              },
-              {
-                "isOptional": true,
-                "name": "Query",
-                "value": "traces\\n| where customDimensions.prop__Name == \\\"VmExecutionsAttempted\\\" and customDimensions.prop__Successful == true\\n| project      \\n    action = tostring(customDimensions.prop__ActionType),\\n    value = toreal(customDimensions.prop__value),\\n    timestamp\\n| summarize request_count=sum(value) by action,bin(timestamp, 1h)\\n"
-              },
-              {
-                "isOptional": true,
-                "name": "PartTitle",
-                "value": "Start \\u0026 Stop (%)"
-              },
-              {
-                "isOptional": true,
-                "name": "PartSubTitle",
-                "value": "Total % count of start and stop action"
-              },
-              {
-                "isOptional": true,
-                "name": "PartId",
-                "value": "08ad6984-455d-440c-9596-73760a4178c3"
-              },
-              {
-                "isOptional": true,
-                "name": "Version",
-                "value": "1.0"
-              },
-              {
-                "isOptional": true,
-                "name": "resourceTypeMode",
-                "value": "components"
-              },
-              {
-                "isOptional": true,
-                "name": "TimeRange",
-                "value": "P30D"
-              },
-              {
-                "isOptional": true,
-                "name": "DashboardId"
-              },
-              {
-                "isOptional": true,
-                "name": "ControlType",
-                "value": "FrameControlChart"
-              },
-              {
-                "isOptional": true,
-                "name": "SpecificChart",
-                "value": "Donut"
-              },
-              {
-                "isOptional": true,
-                "name": "Scope"
-              },
-              {
-                "isOptional": true,
-                "name": "DraftRequestParameters"
-              },
-              {
-                "isOptional": true,
-                "name": "LegendOptions"
-              },
-              {
-                "isOptional": true,
-                "name": "IsQueryContainTimeRange"
-              }
-            ],
-            "settings": {
-              "content": {
-                "LegendOptions": {
-                  "isEnabled": true,
-                  "position": "Bottom"
-                },
-                "Query": "traces\\n| where customDimensions.prop__Name == \\\"VmExecutionsAttempted\\\" and customDimensions.prop__Successful == true\\n| project      \\n    action = tostring(customDimensions.prop__ActionType),\\n    value = toreal(customDimensions.prop__Value),\\n    timestamp\\n| summarize request_count=sum(value) by action,bin(timestamp, 1h)\\n\\n"
-              }
-            },
-            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart"
-          },
-          "position": {
-            "colSpan": 4,
-            "rowSpan": 4,
-            "x": 9,
-            "y": 4
-          }
-        },
-        "5": {
-          "metadata": {
-            "inputs": [
-              {
-                "name": "ComponentId",
-                "value": {
-                  "Name": "${azurerm_application_insights.app_insights.name}",
-                  "ResourceGroup": "${azurerm_application_insights.app_insights.name}",
-                  "ResourceId": "/subscriptions/${azurerm_application_insights.app_insights.name}/resourceGroups/${azurerm_application_insights.app_insights.name}/providers/Microsoft.Insights/components/${azurerm_application_insights.app_insights.name}",
-                  "SubscriptionId": "${azurerm_application_insights.app_insights.name}"
-                }
-              },
-              {
-                "name": "Query",
-                "value": "(traces\\n| where customDimensions.prop__Name == \\\"NoPiiScheduleRequests\\\" and tobool(customDimensions.prop__Sequenced)\\n| project scenario = \\\"Sequenced\\\",      value = toreal(customDimensions.prop__value),      timestamp)\\n| union\\n(traces\\n| where customDimensions.prop__Name == \\\"NoPiiScheduleRequests\\\" and tobool(customDimensions.prop__Sequenced) == false\\n| project scenario = \\\"Scheduled\\\",      value = toreal(customDimensions.prop__value),      timestamp)\\n| union\\n(traces\\n| where customDimensions.prop__Name == \\\"NoPiiAutoStopRequests\\\"\\n| project scenario = \\\"AutoStop\\\",      value = toreal(customDimensions.prop__value),      timestamp)\\n| summarize request_count=sum(value) by scenario,bin(timestamp, 15m)\\n"
-              },
-              {
-                "name": "TimeRange",
-                "value": "PT1H"
-              },
-              {
-                "name": "Dimensions",
-                "value": {
-                  "aggregation": "Sum",
-                  "splitBy": [
-                    {
+                {
+                  "name": "Dimensions",
+                  "value": {
+                    "xAxis": {
                       "name": "scenario",
                       "type": "string"
-                    }
-                  ],
-                  "xAxis": {
-                    "name": "timestamp",
-                    "type": "datetime"
+                    },
+                    "yAxis": [
+                      {
+                        "name": "request_count",
+                        "type": "real"
+                      }
+                    ],
+                    "splitBy": [],
+                    "aggregation": "Sum"
                   },
-                  "yAxis": [
-                    {
-                      "name": "request_count",
-                      "type": "real"
-                    }
-                  ]
-                }
-              },
-              {
-                "name": "Version",
-                "value": "1.0"
-              },
-              {
-                "name": "PartId",
-                "value": "1b21d06a-2b57-4d5a-b912-1fe272b12de9"
-              },
-              {
-                "name": "PartTitle",
-                "value": "StartStop Scenarios"
-              },
-              {
-                "name": "PartSubTitle",
-                "value": "Count of recently executed schedules, sequenced, and auto stop scenarios."
-              },
-              {
-                "name": "resourceTypeMode",
-                "value": "components"
-              },
-              {
-                "name": "ControlType",
-                "value": "FrameControlChart"
-              },
-              {
-                "name": "SpecificChart",
-                "value": "StackedColumn"
-              },
-              {
-                "isOptional": true,
-                "name": "DashboardId"
-              },
-              {
-                "isOptional": true,
-                "name": "Scope"
-              },
-              {
-                "isOptional": true,
-                "name": "DraftRequestParameters"
-              },
-              {
-                "isOptional": true,
-                "name": "LegendOptions"
-              },
-              {
-                "isOptional": true,
-                "name": "IsQueryContainTimeRange"
-              }
-            ],
-            "settings": {
-              "content": {
-                "LegendOptions": {
-                  "isEnabled": true,
-                  "position": "Bottom"
+                  "isOptional": true
                 },
-                "Query": "(traces\\n| where customDimensions.prop__Name == \\\"NoPiiScheduleRequests\\\" and tobool(customDimensions.prop__Sequenced)\\n| project scenario = \\\"Sequenced\\\",      value = toreal(customDimensions.prop__Value),      timestamp)\\n| union\\n(traces\\n| where customDimensions.prop__Name == \\\"NoPiiScheduleRequests\\\" and tobool(customDimensions.prop__Sequenced) == false\\n| project scenario = \\\"Scheduled\\\",      value = toreal(customDimensions.prop__Value),      timestamp)\\n| union\\n(traces\\n| where customDimensions.prop__Name == \\\"NoPiiAutoStopRequests\\\"\\n| project scenario = \\\"AutoStop\\\",      value = toreal(customDimensions.prop__Value),      timestamp)\\n| summarize request_count=sum(value) by scenario,bin(timestamp, 15m)\\n\\n"
-              }
-            },
-            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart"
-          },
-          "position": {
-            "colSpan": 4,
-            "rowSpan": 4,
-            "x": 13,
-            "y": 4
-          }
-        },
-        "6": {
-          "metadata": {
-            "inputs": [
-              {
-                "name": "ComponentId",
-                "value": {
-                  "Name": "${azurerm_application_insights.app_insights.name}",
-                  "ResourceGroup": "${azurerm_application_insights.app_insights.name}",
-                  "ResourceId": "/subscriptions/${azurerm_application_insights.app_insights.name}/resourceGroups/${azurerm_resource_group.this.name}/providers/Microsoft.Insights/components/${azurerm_application_insights.app_insights.name}",
-                  "SubscriptionId": "${azurerm_application_insights.app_insights.name}"
+                {
+                  "name": "Query",
+                  "value": "(traces\n| where customDimensions.prop__Name == \"NoPiiScheduleRequests\" and tobool(customDimensions.prop__Sequenced)\n| project scenario = \"Sequenced\",      value = toreal(customDimensions.prop__value),      timestamp)\n| union (traces\n| where customDimensions.prop__Name == \"NoPiiScheduleRequests\" and tobool(customDimensions.prop__Sequenced) == false\n| project scenario = \"Scheduled\",      value = toreal(customDimensions.prop__value),      timestamp)\n| union (traces\n| where customDimensions.prop__Name == \"NoPiiAutoStopRequests\"\n| project scenario = \"AutoStop\",      value = toreal(customDimensions.prop__value),      timestamp)\n| summarize request_count=sum(value) by scenario\n",
+                  "isOptional": true
+                },
+                {
+                  "name": "PartTitle",
+                  "value": "Count by Scenarios",
+                  "isOptional": true
+                },
+                {
+                  "name": "PartSubTitle",
+                  "value": "Count of recently executed Scenarios",
+                  "isOptional": true
+                },
+                {
+                  "name": "PartId",
+                  "value": "7c4418b6-9831-46ae-b5d9-5c6b611ae16f",
+                  "isOptional": true
+                },
+                {
+                  "name": "Version",
+                  "value": "1.0",
+                  "isOptional": true
+                },
+                {
+                  "name": "resourceTypeMode",
+                  "value": "components",
+                  "isOptional": true
+                },
+                {
+                  "name": "TimeRange",
+                  "value": "P30D",
+                  "isOptional": true
+                },
+                {
+                  "name": "DashboardId",
+                  "isOptional": true
+                },
+                {
+                  "name": "ControlType",
+                  "value": "FrameControlChart",
+                  "isOptional": true
+                },
+                {
+                  "name": "SpecificChart",
+                  "value": "Donut",
+                  "isOptional": true
+                },
+                {
+                  "name": "Scope",
+                  "isOptional": true
+                },
+                {
+                  "name": "DraftRequestParameters",
+                  "isOptional": true
+                },
+                {
+                  "name": "LegendOptions",
+                  "isOptional": true
+                },
+                {
+                  "name": "IsQueryContainTimeRange",
+                  "isOptional": true
                 }
-              },
-              {
-                "name": "Query",
-                "value": "traces\\n| where customDimensions.prop__Name == \\\"NoPiiScheduleRequests\\\"\\n| project      \\n    scenario = tostring(customDimensions.prop__Scenario),\\n    value = toreal(customDimensions.prop__value),\\n    timestamp\\n| summarize request_count=sum(value) by scenario,bin(timestamp, 1h)\\n"
-              },
-              {
-                "name": "TimeRange",
-                "value": "PT1H"
-              },
-              {
-                "name": "Dimensions",
-                "value": {
-                  "aggregation": "Sum",
-                  "splitBy": [
-                    {
-                      "name": "scenario",
+              ],
+              "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+              "settings": {
+                "content": {
+                  "Query": "(traces\n| where customDimensions.prop__Name == \"NoPiiScheduleRequests\" and tobool(customDimensions.prop__Sequenced)\n| project scenario = \"Sequenced\",      value = toreal(customDimensions.prop__Value),      timestamp)\n| union (traces\n| where customDimensions.prop__Name == \"NoPiiScheduleRequests\" and tobool(customDimensions.prop__Sequenced) == false\n| project scenario = \"Scheduled\",      value = toreal(customDimensions.prop__Value),      timestamp)\n| union (traces\n| where customDimensions.prop__Name == \"NoPiiAutoStopRequests\"\n| project scenario = \"AutoStop\",      value = toreal(customDimensions.prop__Value),      timestamp)\n| summarize request_count=sum(value) by scenario\n\n",
+                  "LegendOptions": {
+                    "isEnabled": true,
+                    "position": "Bottom"
+                  }
+                }
+              }
+            }
+          },
+          "7": {
+            "position": {
+              "x": 10,
+              "y": 8,
+              "colSpan": 3,
+              "rowSpan": 4
+            },
+            "metadata": {
+              "inputs": [
+                {
+                  "name": "ComponentId",
+                  "value": {
+                    "SubscriptionId": "${data.azurerm_client_config.current.subscription_id}",
+                    "ResourceGroup": "${azurerm_application_insights.app_insights.resource_group_name}",
+                    "Name": "${azurerm_application_insights.app_insights.name}",
+                    "ResourceId": "${azurerm_application_insights.app_insights.id}"
+                  },
+                  "isOptional": true
+                },
+                {
+                  "name": "Dimensions",
+                  "value": {
+                    "xAxis": {
+                      "name": "resource_group",
                       "type": "string"
-                    }
-                  ],
-                  "xAxis": {
-                    "name": "timestamp",
-                    "type": "datetime"
+                    },
+                    "yAxis": [
+                      {
+                        "name": "count_",
+                        "type": "long"
+                      }
+                    ],
+                    "splitBy": [],
+                    "aggregation": "Sum"
                   },
-                  "yAxis": [
-                    {
-                      "name": "request_count",
-                      "type": "real"
-                    }
-                  ]
-                }
-              },
-              {
-                "name": "Version",
-                "value": "1.0"
-              },
-              {
-                "name": "PartId",
-                "value": "1b21d06a-2b57-4d5a-b912-1fe272b12de9"
-              },
-              {
-                "name": "PartTitle",
-                "value": "StartStop Scenarios"
-              },
-              {
-                "name": "PartSubTitle",
-                "value": "Count of recently executed schedules, sequenced, and auto stop scenarios."
-              },
-              {
-                "name": "resourceTypeMode",
-                "value": "components"
-              },
-              {
-                "name": "ControlType",
-                "value": "FrameControlChart"
-              },
-              {
-                "name": "SpecificChart",
-                "value": "StackedColumn"
-              },
-              {
-                "isOptional": true,
-                "name": "DashboardId"
-              },
-              {
-                "isOptional": true,
-                "name": "Scope"
-              },
-              {
-                "isOptional": true,
-                "name": "DraftRequestParameters"
-              },
-              {
-                "isOptional": true,
-                "name": "LegendOptions"
-              },
-              {
-                "isOptional": true,
-                "name": "IsQueryContainTimeRange"
-              }
-            ],
-            "settings": {
-              "content": {
-                "LegendOptions": {
-                  "isEnabled": true,
-                  "position": "Bottom"
+                  "isOptional": true
                 },
-                "Query": "traces\\n| where customDimensions.prop__Name == \\\"NoPiiScheduleRequests\\\"\\n| project      \\n    scenario = tostring(customDimensions.prop__Scenario),\\n    value = toreal(customDimensions.prop__Value),\\n    timestamp\\n| summarize request_count=sum(value) by scenario,bin(timestamp, 1h)\\n\\n"
-              }
-            },
-            "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart"
-          },
-          "position": {
-            "colSpan": 4,
-            "rowSpan": 4,
-            "x": 17,
-            "y": 4
+                {
+                  "name": "Query",
+                  "value": "traces\n| where customDimensions.prop__Name == \"VmExecutionsAttempted\"\n| project  resource_group = tostring(customDimensions.prop__ResourceGroup)\n| summarize count() by resource_group\n",
+                  "isOptional": true
+                },
+                {
+                  "name": "PartTitle",
+                  "value": "Count by Resource Group",
+                  "isOptional": true
+                },
+                {
+                  "name": "PartSubTitle",
+                  "value": "Resource Groups which recently had a start or stop action",
+                  "isOptional": true
+                },
+                {
+                  "name": "PartId",
+                  "value": "2aef6442-2811-49df-b349-d58e1d868ab5",
+                  "isOptional": true
+                },
+                {
+                  "name": "Version",
+                  "value": "1.0",
+                  "isOptional": true
+                },
+                {
+                  "name": "resourceTypeMode",
+                  "value": "components",
+                  "isOptional": true
+                },
+                {
+                  "name": "TimeRange",
+                  "value": "P30D",
+                  "isOptional": true
+                },
+                {
+                  "name": "DashboardId",
+                  "isOptional": true
+                },
+                {
+                  "name": "ControlType",
+                  "value": "FrameControlChart",
+                  "isOptional": true
+                },
+                {
+                  "name": "SpecificChart",
+                  "value": "Donut",
+                  "isOptional": true
+                },
+                {
+                  "name": "Scope",
+                  "isOptional": true
+                },
+                {
+                  "name": "DraftRequestParameters",
+                  "isOptional": true
+                },
+                {
+                  "name": "LegendOptions",
+                  "isOptional": true
+                },
+                {
+                  "name": "IsQueryContainTimeRange",
+                  "isOptional": true
+                }
+              ],
+              "type": "Extension/Microsoft_OperationsManagementSuite_Workspace/PartType/LogsDashboardPart",
+              "settings": {}
+            }
           }
         }
       }
     }
-  }
 }
 DASHBOARD_PROPERTIES
   location             = azurerm_resource_group.this.location
