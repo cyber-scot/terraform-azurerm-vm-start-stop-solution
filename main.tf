@@ -68,7 +68,7 @@ resource "azurerm_monitor_action_group" "notification_group_ag" {
   name                = var.notification_action_group_name != null ? var.notification_action_group_name : "StartStopV2_VM_Notification"
   resource_group_name = azurerm_resource_group.this.name
   short_name          = var.notification_action_group_short_name != null ? var.notification_action_group_short_name : "StStAlertV2"
-
+  tags                = local.solution_merged_tags
   dynamic "email_receiver" {
     for_each = var.email_receivers
     content {
@@ -82,6 +82,7 @@ resource "azurerm_monitor_action_group" "app_insights_ag" {
   name                = var.smart_detection_action_group_name != null ? var.smart_detection_action_group_name : "Application Insights Smart Detection"
   resource_group_name = azurerm_resource_group.this.name
   short_name          = var.smart_detection_action_group_short_name != null ? var.smart_detection_action_group_short_name : "SmartDetect"
+  tags                = local.solution_merged_tags
   arm_role_receiver {
     name                    = "Monitoring Contributor"
     role_id                 = "749f88d5-cbae-40b8-bcfc-e573ddc772fa"
@@ -200,6 +201,7 @@ resource "azurerm_monitor_smart_detector_alert_rule" "app_insights_anomalies_det
   resource_group_name = azurerm_resource_group.this.name
   scope_resource_ids  = [azurerm_application_insights.app_insights.id]
   severity            = "Sev3"
+  tags                = local.solution_merged_tags
   action_group {
     ids = [azurerm_monitor_action_group.app_insights_ag.id]
   }
@@ -754,7 +756,7 @@ resource "azurerm_logic_app_workflow" "logic_app_sequenced_start" {
   location            = azurerm_resource_group.this.location
   name                = var.sequenced_start_logic_app_name != null ? var.sequenced_start_logic_app_name : "ststv2_vms_Sequenced_start"
   resource_group_name = azurerm_resource_group.this.name
-  tags                = local.solution_tags
+  tags                = local.solution_merged_tags
 }
 
 resource "azurerm_logic_app_action_custom" "sequenced_start_failed_action" {
@@ -860,7 +862,7 @@ resource "azurerm_logic_app_workflow" "logic_app_sequenced_stop" {
   location            = azurerm_resource_group.this.location
   name                = var.sequenced_stop_logic_app_name != null ? var.sequenced_stop_logic_app_name : "ststv2_vms_Sequenced_stop"
   resource_group_name = azurerm_resource_group.this.name
-  tags                = local.solution_tags
+  tags                = local.solution_merged_tags
 }
 
 
