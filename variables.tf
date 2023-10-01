@@ -143,6 +143,12 @@ variable "email_receivers" {
   description = "List of email receivers for the action group"
 }
 
+variable "function_app_https_only" {
+  type        = bool
+  description = "Whether the function app should be function app only"
+  default     = true
+}
+
 variable "function_app_name" {
   type        = string
   description = "The name of function app"
@@ -582,7 +588,31 @@ variable "storage_account_name" {
   default     = null
 }
 
+variable "storage_account_public_network_access_enabled" {
+  type        = bool
+  description = "Whether public network access are enabled on the storage account"
+  default     = true
+}
+
+variable "storage_account_shared_access_keys_enabled" {
+  type        = bool
+  description = "Whether shared access keys are enabled on the storage account"
+  default     = false
+}
+
 variable "tags" {
   type        = map(string)
   description = "The tags assigned to the resource"
+}
+
+variable "use_user_assigned_identity" {
+  description = "Whether to use user assigned managed identity for the solution"
+  type        = bool
+  default     = false
+}
+
+variable "user_assigned_identity_name" {
+  description = "The name of the user assigned identity, if used"
+  type        = string
+  default     = null
 }

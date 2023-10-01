@@ -249,17 +249,17 @@ output "rg_tags" {
 }
 
 output "role_assignment_id" {
-  value       = azurerm_role_assignment.fnc_contributor.id
+  value       = azurerm_role_assignment.id_contributor.id
   description = "The ID of the Role Assignment."
 }
 
 output "role_assignment_principal_id" {
-  value       = azurerm_role_assignment.fnc_contributor.principal_id
+  value       = azurerm_role_assignment.id_contributor.principal_id
   description = "The Principal ID associated with the Role Assignment."
 }
 
 output "role_assignment_role_definition_name" {
-  value       = azurerm_role_assignment.fnc_contributor.role_definition_name
+  value       = azurerm_role_assignment.id_contributor.role_definition_name
   description = "The Role Definition Name associated with the Role Assignment."
 }
 

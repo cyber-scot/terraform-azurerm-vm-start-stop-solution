@@ -278,6 +278,16 @@ resource "azurerm_storage_account" "storage" {
   name                            = var.storage_account_name != null ? var.storage_account_name : "sa${var.name}"
   resource_group_name             = azurerm_resource_group.this.name
   tags                            = local.solution_merged_tags
+  public_network_access_enabled   = var.storage_account_public_network_access_enabled
+  shared_access_key_enabled       = var.storage_account_shared_access_keys_enabled
+
+  dynamic "identity" {
+    for_each = var.use_user_assigned_identity == true ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = toset([azurerm_user_assigned_identity.uid[0].id])
+    }
+  }
 }
 
 resource "azurerm_storage_container" "web_jobs_hosts" {
@@ -376,12 +386,15 @@ locals {
     "StorageOptions:SubscriptionRequestStoreTable"      = azurerm_storage_table.subscription_requests_store_stable.name
   }
   new_app_settings = {
-    AzureWebJobsStorage                   = "DefaultEndpointsProtocol=https;AccountName=${azurerm_storage_account.storage.name};AccountKey=${azurerm_storage_account.storage.primary_access_key}"
-    APPLICATIONINSIGHTS_CONNECTION_STRING = azurerm_application_insights.app_insights.connection_string
-    APPINSIGHTS_INSTRUMENTATIONKEY        = azurerm_application_insights.app_insights.instrumentation_key
-    FUNCTIONS_EXTENSION_VERSION           = "~4"
-    WEBSITE_NODE_DEFAULT_VERSION          = "~10"
-    "WEBSITE_CONTENTSHARE"                = var.function_app_name != null ? var.function_app_name : "fnc-${var.name}"
+    "AzureWebJobsStorage__blobServiceUri"  = "https://${azurerm_storage_account.storage.name}.blob.core.windows.net"
+    "AzureWebJobsStorage__queueServiceUri" = "https://${azurerm_storage_account.storage.name}.queue.core.windows.net"
+    "AzureWebJobsStorage__tableServiceUri" = "https://${azurerm_storage_account.storage.name}.table.core.windows.net"
+    AzureWebJobsStorage                    = "DefaultEndpointsProtocol=https;AccountName=${azurerm_storage_account.storage.name};AccountKey=${azurerm_storage_account.storage.primary_access_key}"
+    APPLICATIONINSIGHTS_CONNECTION_STRING  = azurerm_application_insights.app_insights.connection_string
+    APPINSIGHTS_INSTRUMENTATIONKEY         = azurerm_application_insights.app_insights.instrumentation_key
+    FUNCTIONS_EXTENSION_VERSION            = "~4"
+    WEBSITE_NODE_DEFAULT_VERSION           = "~10"
+    "WEBSITE_CONTENTSHARE"                 = var.function_app_name != null ? var.function_app_name : "fnc-${var.name}"
   }
   app_settings = merge(local.new_app_settings, local.default_app_settings)
 }
@@ -397,11 +410,22 @@ resource "azurerm_windows_function_app" "function_app" {
   service_plan_id            = azurerm_service_plan.fnc_asp.id
   storage_account_access_key = azurerm_storage_account.storage.primary_access_key
   storage_account_name       = azurerm_storage_account.storage.name
+  https_only                 = var.function_app_https_only
+  tags                       = local.solution_merged_tags
 
-  tags = local.solution_merged_tags
+  dynamic "identity" {
+    for_each = var.use_user_assigned_identity == true ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = toset([azurerm_user_assigned_identity.uid[0].id])
+    }
+  }
 
-  identity {
-    type = "SystemAssigned"
+  dynamic "identity" {
+    for_each = var.use_user_assigned_identity == false ? [1] : []
+    content {
+      type = "SystemAssigned"
+    }
   }
 
   site_config {
@@ -413,14 +437,49 @@ resource "azurerm_windows_function_app" "function_app" {
   }
 }
 
-resource "azurerm_role_assignment" "fnc_contributor" {
-  principal_id         = azurerm_windows_function_app.function_app.identity[0].principal_id
+resource "azurerm_user_assigned_identity" "uid" {
+  count               = var.use_user_assigned_identity == true ? 1 : 0
+  location            = azurerm_resource_group.this.location
+  name                = var.user_assigned_identity_name != null ? var.user_assigned_identity_name : "uid-ststv2"
+  resource_group_name = azurerm_resource_group.this.name
+}
+
+resource "azurerm_role_assignment" "id_contributor" {
+  principal_id         = var.use_user_assigned_identity == true ? azurerm_user_assigned_identity.uid[0].principal_id : azurerm_windows_function_app.function_app.identity[0].principal_id
   scope                = format("/subscriptions/%s", data.azurerm_client_config.current.subscription_id)
   role_definition_name = "Contributor"
 }
 
+resource "azurerm_role_assignment" "id_blob_owner" {
+  count                = var.use_user_assigned_identity == true ? 1 : 0
+  principal_id         = var.use_user_assigned_identity == true ? azurerm_user_assigned_identity.uid[0].principal_id : azurerm_windows_function_app.function_app.identity[0].principal_id
+  scope                = format("/subscriptions/%s", data.azurerm_client_config.current.subscription_id)
+  role_definition_name = "Storage Blob Data Owner"
+}
+
+resource "azurerm_role_assignment" "id_smb_contributor" {
+  count                = var.use_user_assigned_identity == true ? 1 : 0
+  principal_id         = var.use_user_assigned_identity == true ? azurerm_user_assigned_identity.uid[0].principal_id : azurerm_windows_function_app.function_app.identity[0].principal_id
+  scope                = format("/subscriptions/%s", data.azurerm_client_config.current.subscription_id)
+  role_definition_name = "Storage File Data SMB Share Contributor"
+}
+
+resource "azurerm_role_assignment" "id_queue_contributor" {
+  count                = var.use_user_assigned_identity == true ? 1 : 0
+  principal_id         = var.use_user_assigned_identity == true ? azurerm_user_assigned_identity.uid[0].principal_id : azurerm_windows_function_app.function_app.identity[0].principal_id
+  scope                = format("/subscriptions/%s", data.azurerm_client_config.current.subscription_id)
+  role_definition_name = "Storage Queue Data Contributor"
+}
+
+resource "azurerm_role_assignment" "id_table_contributor" {
+  count                = var.use_user_assigned_identity == true ? 1 : 0
+  principal_id         = var.use_user_assigned_identity == true ? azurerm_user_assigned_identity.uid[0].principal_id : azurerm_windows_function_app.function_app.identity[0].principal_id
+  scope                = format("/subscriptions/%s", data.azurerm_client_config.current.subscription_id)
+  role_definition_name = "Storage Table Data Contributor"
+}
+
 resource "time_sleep" "wait_120_seconds" {
-  depends_on = [azurerm_role_assignment.fnc_contributor]
+  depends_on = [azurerm_role_assignment.id_contributor]
 
   create_duration = "120s"
 }
@@ -432,6 +491,14 @@ resource "azurerm_logic_app_workflow" "logic_app_auto_stop" {
   name                = var.auto_stop_logic_app_name != null ? var.auto_stop_logic_app_name : "ststv2_vms_AutoStop"
   resource_group_name = azurerm_resource_group.this.name
   tags                = local.solution_merged_tags
+
+  dynamic "identity" {
+    for_each = var.use_user_assigned_identity == true ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = toset([azurerm_user_assigned_identity.uid[0].id])
+    }
+  }
 }
 
 
@@ -545,6 +612,14 @@ resource "azurerm_logic_app_workflow" "logic_app_scheduled_start" {
   name                = var.scheduled_start_logic_app_name != null ? var.scheduled_start_logic_app_name : "ststv2_vms_Scheduled_start"
   resource_group_name = azurerm_resource_group.this.name
   tags                = local.solution_merged_tags
+
+  dynamic "identity" {
+    for_each = var.use_user_assigned_identity == true ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = toset([azurerm_user_assigned_identity.uid[0].id])
+    }
+  }
 }
 
 
@@ -652,6 +727,14 @@ resource "azurerm_logic_app_workflow" "logic_app_scheduled_stop" {
   name                = var.scheduled_stop_logic_app_name != null ? var.scheduled_stop_logic_app_name : "ststv2_vms_Scheduled_stop"
   resource_group_name = azurerm_resource_group.this.name
   tags                = local.solution_merged_tags
+
+  dynamic "identity" {
+    for_each = var.use_user_assigned_identity == true ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = toset([azurerm_user_assigned_identity.uid[0].id])
+    }
+  }
 }
 
 resource "azurerm_logic_app_action_custom" "scheduled_stop_failed_function" {
@@ -757,6 +840,14 @@ resource "azurerm_logic_app_workflow" "logic_app_sequenced_start" {
   name                = var.sequenced_start_logic_app_name != null ? var.sequenced_start_logic_app_name : "ststv2_vms_Sequenced_start"
   resource_group_name = azurerm_resource_group.this.name
   tags                = local.solution_merged_tags
+
+  dynamic "identity" {
+    for_each = var.use_user_assigned_identity == true ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = toset([azurerm_user_assigned_identity.uid[0].id])
+    }
+  }
 }
 
 resource "azurerm_logic_app_action_custom" "sequenced_start_failed_action" {
@@ -863,6 +954,14 @@ resource "azurerm_logic_app_workflow" "logic_app_sequenced_stop" {
   name                = var.sequenced_stop_logic_app_name != null ? var.sequenced_stop_logic_app_name : "ststv2_vms_Sequenced_stop"
   resource_group_name = azurerm_resource_group.this.name
   tags                = local.solution_merged_tags
+
+  dynamic "identity" {
+    for_each = var.use_user_assigned_identity == true ? [1] : []
+    content {
+      type         = "UserAssigned"
+      identity_ids = toset([azurerm_user_assigned_identity.uid[0].id])
+    }
+  }
 }
 
 
