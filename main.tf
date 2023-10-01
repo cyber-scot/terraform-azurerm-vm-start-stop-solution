@@ -268,8 +268,43 @@ resource "azurerm_storage_account_network_rules" "storage_rules" {
   ip_rules                   = local.storage_merged_ip_rules
 }
 
+
+resource "azurerm_role_assignment" "client_blob_owner" {
+  count                = var.use_user_assigned_identity == true && var.assign_current_client_blob_owner == true ? 1 : 0
+  principal_id         = data.azurerm_client_config.current.object_id
+  scope                = format("/subscriptions/%s", data.azurerm_client_config.current.subscription_id)
+  role_definition_name = "Storage Blob Data Owner"
+}
+
+resource "azurerm_role_assignment" "client_smb_contributor" {
+  count                = var.use_user_assigned_identity == true && var.assign_current_client_smb_contributor == true ? 1 : 0
+  principal_id         = data.azurerm_client_config.current.object_id
+  scope                = format("/subscriptions/%s", data.azurerm_client_config.current.subscription_id)
+  role_definition_name = "Storage File Data SMB Share Contributor"
+}
+
+resource "azurerm_role_assignment" "client_queue_contributor" {
+  count                = var.use_user_assigned_identity == true && var.assign_current_client_queue_contributor == true ? 1 : 0
+  principal_id         = data.azurerm_client_config.current.object_id
+  scope                = format("/subscriptions/%s", data.azurerm_client_config.current.subscription_id)
+  role_definition_name = "Storage Queue Data Contributor"
+}
+
+resource "azurerm_role_assignment" "client_table_contributor" {
+  count                = var.use_user_assigned_identity == true && var.assign_current_client_table_contributor == true ? 1 : 0
+  principal_id         = data.azurerm_client_config.current.object_id
+  scope                = format("/subscriptions/%s", data.azurerm_client_config.current.subscription_id)
+  role_definition_name = "Storage Table Data Contributor"
+}
+
 resource "azurerm_storage_account" "storage" {
-  account_kind                    = "Storage"
+  depends_on                      = [
+  azurerm_role_assignment.client_blob_owner[0],
+  azurerm_role_assignment.client_queue_contributor[0],
+  azurerm_role_assignment.client_smb_contributor[0],
+  azurerm_role_assignment.client_table_contributor[0]
+  ]
+  account_kind                    = "StorageV2"
   account_replication_type        = "LRS"
   account_tier                    = "Standard"
   allow_nested_items_to_be_public = false

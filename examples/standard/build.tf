@@ -85,10 +85,6 @@ module "start_stop" {
     }
   ]
 
-  create_law_linked_app_insights = true
-  create_new_law                 = true
-  use_user_assigned_identity     = true
-
   scheduled_start_logic_app_enabled                    = true
   scheduled_start_logic_app_evaluation_frequency       = "Week"
   scheduled_start_logic_app_evaluation_interval_number = 1

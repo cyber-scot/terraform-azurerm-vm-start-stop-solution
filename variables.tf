@@ -16,6 +16,30 @@ variable "app_service_plan_name" {
   default     = null
 }
 
+variable "assign_current_client_blob_owner" {
+  type = bool
+  description = "Whether the current client should be assigned roles for the storage account"
+  default = false
+}
+
+variable "assign_current_client_smb_contributor" {
+  type = bool
+  description = "Whether the current client should be assigned roles for the storage account"
+  default = false
+}
+
+variable "assign_current_client_queue_contributor" {
+  type = bool
+  description = "Whether the current client should be assigned roles for the storage account"
+  default = false
+}
+
+variable "assign_current_client_table_contributor" {
+  type = bool
+  description = "Whether the current client should be assigned roles for the storage account"
+  default = false
+}
+
 variable "attempt_fetch_remote_start_stop_code" {
   type        = bool
   description = "Whether the start/stop code should be remote fetched"
@@ -146,7 +170,7 @@ variable "email_receivers" {
 variable "function_app_https_only" {
   type        = bool
   description = "Whether the function app should be function app only"
-  default     = true
+  default     = false
 }
 
 variable "function_app_name" {
@@ -597,7 +621,7 @@ variable "storage_account_public_network_access_enabled" {
 variable "storage_account_shared_access_keys_enabled" {
   type        = bool
   description = "Whether shared access keys are enabled on the storage account"
-  default     = false
+  default     = true
 }
 
 variable "tags" {
