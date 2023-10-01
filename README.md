@@ -16,6 +16,8 @@ These are some known issues in the infrastructure for the v1.0.0 deployment.  PR
 - Disable storage account keys and use managed identities
   - Switch to optional user-assigned managed identity for all resources (e.g. `id-start-stop-solution`)
 - Private endpoint support and VNet integration for function app
+- HTTPS only mode fails
+- Sometimes, when first creating start/stop, alerts may not be created properly due to app insights instance calls failures.  Running apply for a second time seems to resolve this.
 ```hcl
 data "azurerm_client_config" "current" {}
 
@@ -317,11 +319,11 @@ resource "azurerm_role_assignment" "client_table_contributor" {
 }
 
 resource "azurerm_storage_account" "storage" {
-  depends_on                      = [
-  azurerm_role_assignment.client_blob_owner[0],
-  azurerm_role_assignment.client_queue_contributor[0],
-  azurerm_role_assignment.client_smb_contributor[0],
-  azurerm_role_assignment.client_table_contributor[0]
+  depends_on = [
+    azurerm_role_assignment.client_blob_owner[0],
+    azurerm_role_assignment.client_queue_contributor[0],
+    azurerm_role_assignment.client_smb_contributor[0],
+    azurerm_role_assignment.client_table_contributor[0]
   ]
   account_kind                    = "StorageV2"
   account_replication_type        = "LRS"
