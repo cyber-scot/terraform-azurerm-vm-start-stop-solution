@@ -86,6 +86,8 @@ module "start_stop" {
     }
   ]
 
+  function_app_https_only = true
+
   scheduled_start_logic_app_enabled                    = true
   scheduled_start_logic_app_evaluation_frequency       = "Week"
   scheduled_start_logic_app_evaluation_interval_number = 1
