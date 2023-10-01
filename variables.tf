@@ -17,27 +17,27 @@ variable "app_service_plan_name" {
 }
 
 variable "assign_current_client_blob_owner" {
-  type = bool
+  type        = bool
   description = "Whether the current client should be assigned roles for the storage account"
-  default = false
-}
-
-variable "assign_current_client_smb_contributor" {
-  type = bool
-  description = "Whether the current client should be assigned roles for the storage account"
-  default = false
+  default     = false
 }
 
 variable "assign_current_client_queue_contributor" {
-  type = bool
+  type        = bool
   description = "Whether the current client should be assigned roles for the storage account"
-  default = false
+  default     = false
+}
+
+variable "assign_current_client_smb_contributor" {
+  type        = bool
+  description = "Whether the current client should be assigned roles for the storage account"
+  default     = false
 }
 
 variable "assign_current_client_table_contributor" {
-  type = bool
+  type        = bool
   description = "Whether the current client should be assigned roles for the storage account"
-  default = false
+  default     = false
 }
 
 variable "attempt_fetch_remote_start_stop_code" {

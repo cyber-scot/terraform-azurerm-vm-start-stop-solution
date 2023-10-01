@@ -298,11 +298,11 @@ resource "azurerm_role_assignment" "client_table_contributor" {
 }
 
 resource "azurerm_storage_account" "storage" {
-  depends_on                      = [
-  azurerm_role_assignment.client_blob_owner[0],
-  azurerm_role_assignment.client_queue_contributor[0],
-  azurerm_role_assignment.client_smb_contributor[0],
-  azurerm_role_assignment.client_table_contributor[0]
+  depends_on = [
+    azurerm_role_assignment.client_blob_owner[0],
+    azurerm_role_assignment.client_queue_contributor[0],
+    azurerm_role_assignment.client_smb_contributor[0],
+    azurerm_role_assignment.client_table_contributor[0]
   ]
   account_kind                    = "StorageV2"
   account_replication_type        = "LRS"

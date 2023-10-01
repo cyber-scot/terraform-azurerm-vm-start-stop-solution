@@ -287,8 +287,43 @@ resource "azurerm_storage_account_network_rules" "storage_rules" {
   ip_rules                   = local.storage_merged_ip_rules
 }
 
+
+resource "azurerm_role_assignment" "client_blob_owner" {
+  count                = var.use_user_assigned_identity == true && var.assign_current_client_blob_owner == true ? 1 : 0
+  principal_id         = data.azurerm_client_config.current.object_id
+  scope                = format("/subscriptions/%s", data.azurerm_client_config.current.subscription_id)
+  role_definition_name = "Storage Blob Data Owner"
+}
+
+resource "azurerm_role_assignment" "client_smb_contributor" {
+  count                = var.use_user_assigned_identity == true && var.assign_current_client_smb_contributor == true ? 1 : 0
+  principal_id         = data.azurerm_client_config.current.object_id
+  scope                = format("/subscriptions/%s", data.azurerm_client_config.current.subscription_id)
+  role_definition_name = "Storage File Data SMB Share Contributor"
+}
+
+resource "azurerm_role_assignment" "client_queue_contributor" {
+  count                = var.use_user_assigned_identity == true && var.assign_current_client_queue_contributor == true ? 1 : 0
+  principal_id         = data.azurerm_client_config.current.object_id
+  scope                = format("/subscriptions/%s", data.azurerm_client_config.current.subscription_id)
+  role_definition_name = "Storage Queue Data Contributor"
+}
+
+resource "azurerm_role_assignment" "client_table_contributor" {
+  count                = var.use_user_assigned_identity == true && var.assign_current_client_table_contributor == true ? 1 : 0
+  principal_id         = data.azurerm_client_config.current.object_id
+  scope                = format("/subscriptions/%s", data.azurerm_client_config.current.subscription_id)
+  role_definition_name = "Storage Table Data Contributor"
+}
+
 resource "azurerm_storage_account" "storage" {
-  account_kind                    = "Storage"
+  depends_on                      = [
+  azurerm_role_assignment.client_blob_owner[0],
+  azurerm_role_assignment.client_queue_contributor[0],
+  azurerm_role_assignment.client_smb_contributor[0],
+  azurerm_role_assignment.client_table_contributor[0]
+  ]
+  account_kind                    = "StorageV2"
   account_replication_type        = "LRS"
   account_tier                    = "Standard"
   allow_nested_items_to_be_public = false
@@ -303,7 +338,7 @@ resource "azurerm_storage_account" "storage" {
   dynamic "identity" {
     for_each = var.use_user_assigned_identity == true ? [1] : []
     content {
-      type = "UserAssigned"
+      type         = "UserAssigned"
       identity_ids = toset([azurerm_user_assigned_identity.uid[0].id])
     }
   }
@@ -408,12 +443,12 @@ locals {
     "AzureWebJobsStorage__blobServiceUri"  = "https://${azurerm_storage_account.storage.name}.blob.core.windows.net"
     "AzureWebJobsStorage__queueServiceUri" = "https://${azurerm_storage_account.storage.name}.queue.core.windows.net"
     "AzureWebJobsStorage__tableServiceUri" = "https://${azurerm_storage_account.storage.name}.table.core.windows.net"
-    AzureWebJobsStorage                   = "DefaultEndpointsProtocol=https;AccountName=${azurerm_storage_account.storage.name};AccountKey=${azurerm_storage_account.storage.primary_access_key}"
-    APPLICATIONINSIGHTS_CONNECTION_STRING = azurerm_application_insights.app_insights.connection_string
-    APPINSIGHTS_INSTRUMENTATIONKEY        = azurerm_application_insights.app_insights.instrumentation_key
-    FUNCTIONS_EXTENSION_VERSION           = "~4"
-    WEBSITE_NODE_DEFAULT_VERSION          = "~10"
-    "WEBSITE_CONTENTSHARE"                = var.function_app_name != null ? var.function_app_name : "fnc-${var.name}"
+    AzureWebJobsStorage                    = "DefaultEndpointsProtocol=https;AccountName=${azurerm_storage_account.storage.name};AccountKey=${azurerm_storage_account.storage.primary_access_key}"
+    APPLICATIONINSIGHTS_CONNECTION_STRING  = azurerm_application_insights.app_insights.connection_string
+    APPINSIGHTS_INSTRUMENTATIONKEY         = azurerm_application_insights.app_insights.instrumentation_key
+    FUNCTIONS_EXTENSION_VERSION            = "~4"
+    WEBSITE_NODE_DEFAULT_VERSION           = "~10"
+    "WEBSITE_CONTENTSHARE"                 = var.function_app_name != null ? var.function_app_name : "fnc-${var.name}"
   }
   app_settings = merge(local.new_app_settings, local.default_app_settings)
 }
@@ -432,10 +467,10 @@ resource "azurerm_windows_function_app" "function_app" {
   https_only                 = var.function_app_https_only
   tags                       = local.solution_merged_tags
 
-   dynamic "identity" {
+  dynamic "identity" {
     for_each = var.use_user_assigned_identity == true ? [1] : []
     content {
-      type = "UserAssigned"
+      type         = "UserAssigned"
       identity_ids = toset([azurerm_user_assigned_identity.uid[0].id])
     }
   }
@@ -457,7 +492,7 @@ resource "azurerm_windows_function_app" "function_app" {
 }
 
 resource "azurerm_user_assigned_identity" "uid" {
-  count = var.use_user_assigned_identity == true ? 1 : 0
+  count               = var.use_user_assigned_identity == true ? 1 : 0
   location            = azurerm_resource_group.this.location
   name                = var.user_assigned_identity_name != null ? var.user_assigned_identity_name : "uid-ststv2"
   resource_group_name = azurerm_resource_group.this.name
@@ -511,10 +546,10 @@ resource "azurerm_logic_app_workflow" "logic_app_auto_stop" {
   resource_group_name = azurerm_resource_group.this.name
   tags                = local.solution_merged_tags
 
-   dynamic "identity" {
+  dynamic "identity" {
     for_each = var.use_user_assigned_identity == true ? [1] : []
     content {
-      type = "UserAssigned"
+      type         = "UserAssigned"
       identity_ids = toset([azurerm_user_assigned_identity.uid[0].id])
     }
   }
@@ -632,10 +667,10 @@ resource "azurerm_logic_app_workflow" "logic_app_scheduled_start" {
   resource_group_name = azurerm_resource_group.this.name
   tags                = local.solution_merged_tags
 
-   dynamic "identity" {
+  dynamic "identity" {
     for_each = var.use_user_assigned_identity == true ? [1] : []
     content {
-      type = "UserAssigned"
+      type         = "UserAssigned"
       identity_ids = toset([azurerm_user_assigned_identity.uid[0].id])
     }
   }
@@ -747,10 +782,10 @@ resource "azurerm_logic_app_workflow" "logic_app_scheduled_stop" {
   resource_group_name = azurerm_resource_group.this.name
   tags                = local.solution_merged_tags
 
-   dynamic "identity" {
+  dynamic "identity" {
     for_each = var.use_user_assigned_identity == true ? [1] : []
     content {
-      type = "UserAssigned"
+      type         = "UserAssigned"
       identity_ids = toset([azurerm_user_assigned_identity.uid[0].id])
     }
   }
@@ -860,10 +895,10 @@ resource "azurerm_logic_app_workflow" "logic_app_sequenced_start" {
   resource_group_name = azurerm_resource_group.this.name
   tags                = local.solution_merged_tags
 
-   dynamic "identity" {
+  dynamic "identity" {
     for_each = var.use_user_assigned_identity == true ? [1] : []
     content {
-      type = "UserAssigned"
+      type         = "UserAssigned"
       identity_ids = toset([azurerm_user_assigned_identity.uid[0].id])
     }
   }
@@ -977,7 +1012,7 @@ resource "azurerm_logic_app_workflow" "logic_app_sequenced_stop" {
   dynamic "identity" {
     for_each = var.use_user_assigned_identity == true ? [1] : []
     content {
-      type = "UserAssigned"
+      type         = "UserAssigned"
       identity_ids = toset([azurerm_user_assigned_identity.uid[0].id])
     }
   }
@@ -1957,6 +1992,10 @@ No modules.
 | [azurerm_monitor_smart_detector_alert_rule.app_insights_anomalies_detector](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/monitor_smart_detector_alert_rule) | resource |
 | [azurerm_portal_dashboard.dashboard](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/portal_dashboard) | resource |
 | [azurerm_resource_group.this](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/resource_group) | resource |
+| [azurerm_role_assignment.client_blob_owner](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
+| [azurerm_role_assignment.client_queue_contributor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
+| [azurerm_role_assignment.client_smb_contributor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
+| [azurerm_role_assignment.client_table_contributor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
 | [azurerm_role_assignment.id_blob_owner](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
 | [azurerm_role_assignment.id_contributor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
 | [azurerm_role_assignment.id_queue_contributor](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
@@ -1988,6 +2027,10 @@ No modules.
 | <a name="input_allow_resource_only_permissions"></a> [allow\_resource\_only\_permissions](#input\_allow\_resource\_only\_permissions) | Whether users require permissions to resources to view logs | `bool` | `true` | no |
 | <a name="input_app_insights_name"></a> [app\_insights\_name](#input\_app\_insights\_name) | The name of the App insights | `string` | `null` | no |
 | <a name="input_app_service_plan_name"></a> [app\_service\_plan\_name](#input\_app\_service\_plan\_name) | The name of the app service plan | `string` | `null` | no |
+| <a name="input_assign_current_client_blob_owner"></a> [assign\_current\_client\_blob\_owner](#input\_assign\_current\_client\_blob\_owner) | Whether the current client should be assigned roles for the storage account | `bool` | `false` | no |
+| <a name="input_assign_current_client_queue_contributor"></a> [assign\_current\_client\_queue\_contributor](#input\_assign\_current\_client\_queue\_contributor) | Whether the current client should be assigned roles for the storage account | `bool` | `false` | no |
+| <a name="input_assign_current_client_smb_contributor"></a> [assign\_current\_client\_smb\_contributor](#input\_assign\_current\_client\_smb\_contributor) | Whether the current client should be assigned roles for the storage account | `bool` | `false` | no |
+| <a name="input_assign_current_client_table_contributor"></a> [assign\_current\_client\_table\_contributor](#input\_assign\_current\_client\_table\_contributor) | Whether the current client should be assigned roles for the storage account | `bool` | `false` | no |
 | <a name="input_attempt_fetch_remote_start_stop_code"></a> [attempt\_fetch\_remote\_start\_stop\_code](#input\_attempt\_fetch\_remote\_start\_stop\_code) | Whether the start/stop code should be remote fetched | `bool` | `false` | no |
 | <a name="input_auto_stop_logic_app_enabled"></a> [auto\_stop\_logic\_app\_enabled](#input\_auto\_stop\_logic\_app\_enabled) | Whether auto\_stop logic app is enabled | `bool` | `false` | no |
 | <a name="input_auto_stop_logic_app_evaluation_frequency"></a> [auto\_stop\_logic\_app\_evaluation\_frequency](#input\_auto\_stop\_logic\_app\_evaluation\_frequency) | What frequency the auto stop logic app should be evaluating at, for example, Hour, Day etc | `string` | `"Hour"` | no |
@@ -2005,7 +2048,7 @@ No modules.
 | <a name="input_daily_quota_gb"></a> [daily\_quota\_gb](#input\_daily\_quota\_gb) | The amount of gb set for max daily ingetion | `string` | `"30"` | no |
 | <a name="input_dashboard_name"></a> [dashboard\_name](#input\_dashboard\_name) | The name of the dashboard that is made for the start stop solution | `string` | `null` | no |
 | <a name="input_email_receivers"></a> [email\_receivers](#input\_email\_receivers) | List of email receivers for the action group | <pre>list(object({<br>    email_address = string<br>    name          = string<br>  }))</pre> | `[]` | no |
-| <a name="input_function_app_https_only"></a> [function\_app\_https\_only](#input\_function\_app\_https\_only) | Whether the function app should be function app only | `bool` | `true` | no |
+| <a name="input_function_app_https_only"></a> [function\_app\_https\_only](#input\_function\_app\_https\_only) | Whether the function app should be function app only | `bool` | `false` | no |
 | <a name="input_function_app_name"></a> [function\_app\_name](#input\_function\_app\_name) | The name of function app | `string` | `null` | no |
 | <a name="input_internet_ingestion_enabled"></a> [internet\_ingestion\_enabled](#input\_internet\_ingestion\_enabled) | Whether internet ingestion is enabled | `bool` | `null` | no |
 | <a name="input_internet_query_enabled"></a> [internet\_query\_enabled](#input\_internet\_query\_enabled) | Whether or not your workspace can be queried from the internet | `bool` | `null` | no |
@@ -2065,7 +2108,7 @@ No modules.
 | <a name="input_storage_account_fiwall_subnet_ids"></a> [storage\_account\_fiwall\_subnet\_ids](#input\_storage\_account\_fiwall\_subnet\_ids) | List of user-specified subnet IDs | `list(string)` | `[]` | no |
 | <a name="input_storage_account_name"></a> [storage\_account\_name](#input\_storage\_account\_name) | The name of the storage account to be made | `string` | `null` | no |
 | <a name="input_storage_account_public_network_access_enabled"></a> [storage\_account\_public\_network\_access\_enabled](#input\_storage\_account\_public\_network\_access\_enabled) | Whether public network access are enabled on the storage account | `bool` | `true` | no |
-| <a name="input_storage_account_shared_access_keys_enabled"></a> [storage\_account\_shared\_access\_keys\_enabled](#input\_storage\_account\_shared\_access\_keys\_enabled) | Whether shared access keys are enabled on the storage account | `bool` | `false` | no |
+| <a name="input_storage_account_shared_access_keys_enabled"></a> [storage\_account\_shared\_access\_keys\_enabled](#input\_storage\_account\_shared\_access\_keys\_enabled) | Whether shared access keys are enabled on the storage account | `bool` | `true` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | The tags assigned to the resource | `map(string)` | n/a | yes |
 | <a name="input_use_user_assigned_identity"></a> [use\_user\_assigned\_identity](#input\_use\_user\_assigned\_identity) | Whether to use user assigned managed identity for the solution | `bool` | `false` | no |
 | <a name="input_user_assigned_identity_name"></a> [user\_assigned\_identity\_name](#input\_user\_assigned\_identity\_name) | The name of the user assigned identity, if used | `string` | `null` | no |
